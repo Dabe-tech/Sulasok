@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BuildKo | Pick your PC parts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eceee9;
+      --panel: #ffffff;
+      --ink: #15181d;
+      --muted: #5d6570;
+      --line: #d3d7d0;
+      --blue: #2547f5;
+      --blue-soft: #e3e8ff;
+      --ok: #1b7a46;
+      --ok-soft: #dff3e6;
+      --bad: #b3261e;
+      --bad-soft: #fbe3e1;
+      --font: "Archivo", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.45; }
+    button { font-family: inherit; }
+    button:focus-visible, select:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+    .top { background: var(--ink); color: #fff; }
+    .top .inner { max-width: 1180px; margin: 0 auto; padding: 26px 20px 24px; display: flex; flex-wrap: wrap; gap: 14px 30px; align-items: end; justify-content: space-between; }
+    .brand { font-stretch: 125%; font-weight: 800; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1; letter-spacing: -0.02em; margin: 0; }
+    .top p { margin: 6px 0 0; color: #b9c0cc; max-width: 46ch; }
+    .presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .presets span { color: #b9c0cc; font-size: 0.9rem; margin-right: 4px; }
+    .presets button { background: transparent; color: #fff; border: 2px solid #5a6270; border-radius: 6px; padding: 7px 12px; font-weight: 600; cursor: pointer; }
+    .presets button:hover { border-color: #fff; }
+
+    .layout { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 26px; align-items: start; }
+
+    .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 14px; }
+    .tabs button { flex: 0 0 auto; background: var(--panel); border: 2px solid var(--line); border-radius: 8px; padding: 9px 14px; font-weight: 600; cursor: pointer; color: var(--ink); }
+    .tabs button[aria-selected="true"] { border-color: var(--ink); background: var(--ink); color: #fff; }
+    .tabs .done { color: var(--ok); font-weight: 800; }
+    .tabs button[aria-selected="true"] .done { color: #8be3ae; }
+
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .toolbar h2 { margin: 0; font-size: 1.4rem; font-stretch: 112%; }
+    .toolbar label { font-size: 0.9rem; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+    .toolbar select { font: inherit; padding: 7px 10px; border-radius: 6px; border: 2px solid var(--line); background: var(--panel); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+    .card { background: var(--panel); border: 2px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .card.chosen { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+    .card.conflict { border-style: dashed; }
+    .card .head { display: flex; gap: 12px; align-items: center; }
+    .icon { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 8px; background: var(--blue-soft); color: var(--blue); display: grid; place-items: center; }
+    .icon svg { width: 30px; height: 30px; }
+    .card h3 { margin: 0; font-size: 1.02rem; line-height: 1.2; }
+    .card .brand-name { color: var(--muted); font-size: 0.85rem; }
+    .specs { list-style: none; margin: 0; padding: 0; font-size: 0.9rem; color: var(--muted); display: grid; gap: 2px; }
+    .specs b { color: var(--ink); font-weight: 600; }
+    .warn { background: var(--bad-soft); color: var(--bad); border-radius: 6px; padding: 7px 9px; font-size: 0.85rem; font-weight: 600; }
+    .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 4px; }
+    .price { font-weight: 800; font-size: 1.2rem; font-stretch: 110%; }
+    .choose { border: 2px solid var(--blue); background: var(--blue); color: #fff; border-radius: 6px; padding: 8px 14px; font-weight: 700; cursor: pointer; }
+    .choose.on { background: var(--panel); color: var(--blue); }
+
+    aside { position: sticky; top: 16px; background: var(--panel); border: 2px solid var(--ink); border-radius: 10px; padding: 18px; }
+    aside h2 { margin: 0 0 2px; font-size: 1.3rem; font-stretch: 112%; }
+    .progress { color: var(--muted); font-size: 0.9rem; margin: 0 0 12px; }
+    .slots { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
+    .slots li { display: flex; justify-content: space-between; gap: 10px; font-size: 0.92rem; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+    .slots .name { min-width: 0; }
+    .slots .label { color: var(--muted); font-size: 0.8rem; display: block; }
+    .slots .empty { color: var(--muted); font-style: italic; }
+    .slots .amt { font-weight: 700; white-space: nowrap; }
+    .total { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 12px; }
+    .total strong { font-size: 1.7rem; font-stretch: 115%; font-weight: 800; }
+    .checks { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
+    .checks li { padding: 7px 9px; border-radius: 6px; font-size: 0.86rem; font-weight: 600; }
+    .checks .ok { background: var(--ok-soft); color: var(--ok); }
+    .checks .bad { background: var(--bad-soft); color: var(--bad); }
+    .actions { display: flex; gap: 8px; }
+    .actions button { flex: 1; padding: 10px; border-radius: 6px; font-weight: 700; cursor: pointer; border: 2px solid var(--ink); background: var(--ink); color: #fff; }
+    .actions button.alt { background: transparent; color: var(--ink); }
+    .note { color: var(--muted); font-size: 0.8rem; margin: 12px 0 0; }
+    #status { min-height: 1.2em; font-size: 0.85rem; color: var(--ok); margin: 8px 0 0; }
+
+    @media (max-width: 880px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="inner">
+      <div>
+        <h1 class="brand">BuildKo</h1>
+        <p>Pick one part per category and see your total in pesos. We flag parts that won't work together.</p>
+      </div>
+      <div class="presets" role="group" aria-label="Start from a preset build">
+        <span>Start from:</span>
+        <button type="button" data-preset="budget">Budget gaming</button>
+        <button type="button" data-preset="mid">Mid-range</button>
+        <button type="button" data-preset="high">High-end</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="tabs" id="tabs" role="tablist" aria-label="Part categories"></div>
+      <div class="toolbar">
+        <h2 id="cat-title"></h2>
+        <label>Sort by
+          <select id="sort">
+            <option value="low">Price: low to high</option>
+            <option value="high">Price: high to low</option>
+          </select>
+        </label>
+      </div>
+      <section class="grid" id="grid" aria-live="polite"></section>
+    </main>
+
+    <aside aria-label="Your build">
+      <h2>Your build</h2>
+      <p class="progress" id="progress"></p>
+      <ul class="slots" id="slots"></ul>
+      <p class="total"><span>Total</span><strong id="total"></strong></p>
+      <ul class="checks" id="checks"></ul>
+      <div class="actions">
+        <button type="button" id="copy">Copy list</button>
+        <button type="button" id="clear" class="alt">Clear</button>
+      </div>
+      <p id="status" role="status"></p>
+      <p class="note">Prices are sample values for demo purposes. Check a shop for real prices before buying.</p>
+    </aside>
+  </div>
+
+  <script>
+    var CATS = [
+      { id: "cpu", label: "Processor" },
+      { id: "mb", label: "Motherboard" },
+      { id: "ram", label: "Memory" },
+      { id: "gpu", label: "Graphics card" },
+      { id: "storage", label: "Storage" },
+      { id: "psu", label: "Power supply" },
+      { id: "case", label: "Case" }
+    ];
+
+    var PARTS = [
+      { id: "cpu1", cat: "cpu", brand: "AMD", name: "Ryzen 5 5600", price: 7500, socket: "AM4", watts: 65, specs: ["6 cores, 12 threads", "Socket AM4", "65 W"] },
+      { id: "cpu2", cat: "cpu", brand: "AMD", name: "Ryzen 5 7600", price: 13500, socket: "AM5", watts: 65, specs: ["6 cores, 12 threads", "Socket AM5", "65 W", "Built-in graphics"] },
+      { id: "cpu3", cat: "cpu", brand: "AMD", name: "Ryzen 7 7700", price: 19500, socket: "AM5", watts: 65, specs: ["8 cores, 16 threads", "Socket AM5", "65 W", "Built-in graphics"] },
+      { id: "cpu4", cat: "cpu", brand: "Intel", name: "Core i5-12400F", price: 8500, socket: "LGA1700", watts: 65, specs: ["6 cores, 12 threads", "Socket LGA1700", "65 W"] },
+      { id: "cpu5", cat: "cpu", brand: "Intel", name: "Core i5-14600K", price: 17500, socket: "LGA1700", watts: 125, specs: ["14 cores, 20 threads", "Socket LGA1700", "125 W"] },
+
+      { id: "mb1", cat: "mb", brand: "MSI", name: "B450M mATX", price: 4500, socket: "AM4", ddr: "DDR4", form: "mATX", specs: ["Socket AM4", "DDR4 memory", "Micro-ATX"] },
+      { id: "mb2", cat: "mb", brand: "Gigabyte", name: "B650M mATX", price: 8500, socket: "AM5", ddr: "DDR5", form: "mATX", specs: ["Socket AM5", "DDR5 memory", "Micro-ATX"] },
+      { id: "mb3", cat: "mb", brand: "ASUS", name: "B650 ATX", price: 11500, socket: "AM5", ddr: "DDR5", form: "ATX", specs: ["Socket AM5", "DDR5 memory", "ATX"] },
+      { id: "mb4", cat: "mb", brand: "ASRock", name: "H610M DDR4", price: 4800, socket: "LGA1700", ddr: "DDR4", form: "mATX", specs: ["Socket LGA1700", "DDR4 memory", "Micro-ATX"] },
+      { id: "mb5", cat: "mb", brand: "MSI", name: "B760 ATX DDR5", price: 10500, socket: "LGA1700", ddr: "DDR5", form: "ATX", specs: ["Socket LGA1700", "DDR5 memory", "ATX"] },
+
+      { id: "ram1", cat: "ram", brand: "Kingston", name: "16GB (2x8) DDR4-3200", price: 2200, ddr: "DDR4", specs: ["16 GB total", "DDR4", "3200 MHz"] },
+      { id: "ram2", cat: "ram", brand: "Corsair", name: "32GB (2x16) DDR4-3200", price: 3900, ddr: "DDR4", specs: ["32 GB total", "DDR4", "3200 MHz"] },
+      { id: "ram3", cat: "ram", brand: "Kingston", name: "16GB (2x8) DDR5-5600", price: 3500, ddr: "DDR5", specs: ["16 GB total", "DDR5", "5600 MHz"] },
+      { id: "ram4", cat: "ram", brand: "G.Skill", name: "32GB (2x16) DDR5-6000", price: 6200, ddr: "DDR5", specs: ["32 GB total", "DDR5", "6000 MHz"] },
+
+      { id: "gpu1", cat: "gpu", brand: "NVIDIA", name: "GeForce RTX 3050 6GB", price: 11000, watts: 70, length: 230, specs: ["6 GB video memory", "70 W", "230 mm long"] },
+      { id: "gpu2", cat: "gpu", brand: "AMD", name: "Radeon RX 7600 8GB", price: 17500, watts: 165, length: 240, specs: ["8 GB video memory", "165 W", "240 mm long"] },
+      { id: "gpu3", cat: "gpu", brand: "NVIDIA", name: "GeForce RTX 4060 8GB", price: 20500, watts: 115, length: 250, specs: ["8 GB video memory", "115 W", "250 mm long"] },
+      { id: "gpu4", cat: "gpu", brand: "NVIDIA", name: "GeForce RTX 4070 Super 12GB", price: 44000, watts: 220, length: 305, specs: ["12 GB video memory", "220 W", "305 mm long"] },
+
+      { id: "st1", cat: "storage", brand: "WD", name: "Blue SN580 500GB NVMe", price: 1800, specs: ["500 GB", "NVMe SSD", "Fast boot and loading"] },
+      { id: "st2", cat: "storage", brand: "Kingston", name: "NV2 1TB NVMe", price: 3500, specs: ["1 TB", "NVMe SSD", "Fast boot and loading"] },
+      { id: "st3", cat: "storage", brand: "Samsung", name: "980 Pro 2TB NVMe", price: 8500, specs: ["2 TB", "NVMe SSD", "High-speed"] },
+      { id: "st4", cat: "storage", brand: "Crucial", name: "MX500 1TB SATA SSD", price: 3800, specs: ["1 TB", "SATA SSD", "Reliable all-rounder"] },
+
+      { id: "psu1", cat: "psu", brand: "Cooler Master", name: "450W 80+ White", price: 1900, psuWatts: 450, specs: ["450 W", "80+ White"] },
+      { id: "psu2", cat: "psu", brand: "Corsair", name: "CV550 550W Bronze", price: 2800, psuWatts: 550, specs: ["550 W", "80+ Bronze"] },
+      { id: "psu3", cat: "psu", brand: "Corsair", name: "CX650 650W Bronze", price: 3500, psuWatts: 650, specs: ["650 W", "80+ Bronze"] },
+      { id: "psu4", cat: "psu", brand: "Seasonic", name: "Focus 750W Gold", price: 5200, psuWatts: 750, specs: ["750 W", "80+ Gold"] },
+      { id: "psu5", cat: "psu", brand: "Seasonic", name: "Focus 850W Gold", price: 7200, psuWatts: 850, specs: ["850 W", "80+ Gold"] },
+
+      { id: "case1", cat: "case", brand: "Tecware", name: "Compact mATX", price: 2200, forms: ["mATX"], maxGpu: 240, specs: ["Fits Micro-ATX", "GPU up to 240 mm"] },
+      { id: "case2", cat: "case", brand: "Cooler Master", name: "Mid Tower Mesh", price: 3800, forms: ["ATX", "mATX"], maxGpu: 330, specs: ["Fits ATX and Micro-ATX", "GPU up to 330 mm", "Mesh front for airflow"] },
+      { id: "case3", cat: "case", brand: "NZXT", name: "Airflow mATX", price: 4500, forms: ["mATX"], maxGpu: 300, specs: ["Fits Micro-ATX", "GPU up to 300 mm", "Mesh front for airflow"] },
+      { id: "case4", cat: "case", brand: "Lian Li", name: "Glass Mid Tower", price: 6500, forms: ["ATX", "mATX"], maxGpu: 360, specs: ["Fits ATX and Micro-ATX", "GPU up to 360 mm", "Tempered glass side"] }
+    ];
+
+    var PRESETS = {
+      budget: { cpu: "cpu1", mb: "mb1", ram: "ram1", gpu: "gpu1", storage: "st1", psu: "psu1", "case": "case1" },
+      mid:    { cpu: "cpu2", mb: "mb2", ram: "ram3", gpu: "gpu3", storage: "st2", psu: "psu2", "case": "case2" },
+      high:   { cpu: "cpu3", mb: "mb3", ram: "ram4", gpu: "gpu4", storage: "st3", psu: "psu4", "case": "case4" }
+    };
+
+    var ICONS = {
+      cpu: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="16" height="16" rx="2"/><path d="M12 4v4M20 4v4M12 24v4M20 24v4M4 12h4M4 20h4M24 12h4M24 20h4"/></svg>',
+      mb: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="22" height="22" rx="2"/><rect x="9" y="9" width="7" height="7"/><path d="M20 9v10M9 21h10"/></svg>',
+      ram: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="26" height="10" rx="1"/><path d="M7 20v4M12 20v4M17 20v4M22 20v4M8 14h4M14 14h4M20 14h4"/></svg>',
+      gpu: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="26" height="14" rx="2"/><circle cx="11" cy="15" r="3.5"/><circle cx="21" cy="15" r="3.5"/><path d="M6 22v3M10 22v3"/></svg>',
+      storage: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="9" width="20" height="14" rx="2"/><path d="M10 19h6"/><circle cx="22" cy="19" r="1"/></svg>',
+      psu: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="24" height="16" rx="2"/><circle cx="16" cy="16" r="5"/><path d="M16 12v4l3 2"/></svg>',
+      "case": '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="14" height="26" rx="2"/><circle cx="16" cy="11" r="3"/><path d="M13 20h6M13 24h6"/></svg>'
+    };
+
+    var build = {};
+    var activeCat = "cpu";
+    var STORE_KEY = "buildko-build";
+
+    function peso(n) { return "\u20B1" + n.toLocaleString("en-PH"); }
+    function byId(id) { return PARTS.filter(function (p) { return p.id === id; })[0]; }
+    function catLabel(id) { return CATS.filter(function (c) { return c.id === id; })[0].label; }
+    function $(id) { return document.getElementById(id); }
+
+    function saveBuild() {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(build)); } catch (e) {}
+    }
+    function loadBuild() {
+      try {
+        var saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+        Object.keys(saved).forEach(function (cat) {
+          if (byId(saved[cat])) { build[cat] = saved[cat]; }
+        });
+      } catch (e) {}
+    }
+
+    // Each check returns { cats, ok, text } only when the parts it needs are picked.
+    function runChecks(b) {
+      var p = {};
+      Object.keys(b).forEach(function (cat) { p[cat] = byId(b[cat]); });
+      var out = [];
+
+      if (p.cpu && p.mb) {
+        var okS = p.cpu.socket === p.mb.socket;
+        out.push({ cats: ["cpu", "mb"], ok: okS,
+          text: okS ? "Processor fits the motherboard (" + p.cpu.socket + ")"
+                    : "Processor is " + p.cpu.socket + " but the motherboard is " + p.mb.socket });
+      }
+      if (p.mb && p.ram) {
+        var okR = p.mb.ddr === p.ram.ddr;
+        out.push({ cats: ["mb", "ram"], ok: okR,
+          text: okR ? "Memory matches the motherboard (" + p.ram.ddr + ")"
+                    : "Memory is " + p.ram.ddr + " but the motherboard needs " + p.mb.ddr });
+      }
+      if (p.mb && p["case"]) {
+        var okF = p["case"].forms.indexOf(p.mb.form) !== -1;
+        out.push({ cats: ["mb", "case"], ok: okF,
+          text: okF ? "Motherboard fits the case (" + p.mb.form + ")"
+                    : "Case can't hold a " + p.mb.form + " motherboard" });
+      }
+      if (p.gpu && p["case"]) {
+        var okG = p.gpu.length <= p["case"].maxGpu;
+        out.push({ cats: ["gpu", "case"], ok: okG,
+          text: okG ? "Graphics card fits the case"
+                    : "Graphics card is " + p.gpu.length + " mm, case allows " + p["case"].maxGpu + " mm" });
+      }
+      if (p.psu && p.cpu) {
+        var draw = p.cpu.watts + (p.gpu ? p.gpu.watts : 0) + 100;
+        var need = Math.ceil(draw * 1.3 / 10) * 10;
+        var okP = p.psu.psuWatts >= need;
+        out.push({ cats: ["psu", "cpu", "gpu"], ok: okP,
+          text: okP ? "Power supply is enough (about " + need + " W recommended)"
+                    : "Power supply is too weak. This build needs about " + need + " W" });
+      }
+      return out;
+    }
+
+    function conflictsFor(part) {
+      var test = {};
+      Object.keys(build).forEach(function (k) { test[k] = build[k]; });
+      test[part.cat] = part.id;
+      return runChecks(test).filter(function (c) {
+        return !c.ok && c.cats.indexOf(part.cat) !== -1;
+      });
+    }
+
+    function renderTabs() {
+      var html = "";
+      CATS.forEach(function (c) {
+        var sel = c.id === activeCat;
+        html += '<button type="button" role="tab" data-cat="' + c.id + '" aria-selected="' + sel + '">' +
+          c.label + (build[c.id] ? ' <span class="done" aria-label="chosen">\u2713</span>' : "") + "</button>";
+      });
+      $("tabs").innerHTML = html;
+    }
+
+    function renderGrid() {
+      $("cat-title").textContent = catLabel(activeCat);
+      var dir = $("sort").value === "low" ? 1 : -1;
+      var list = PARTS.filter(function (p) { return p.cat === activeCat; })
+        .sort(function (a, b) { return (a.price - b.price) * dir; });
+      var html = "";
+      list.forEach(function (p) {
+        var chosen = build[activeCat] === p.id;
+        var conflicts = chosen ? [] : conflictsFor(p);
+        var specs = p.specs.map(function (s) { return "<li>" + s + "</li>"; }).join("");
+        html += '<article class="card' + (chosen ? " chosen" : "") + (conflicts.length ? " conflict" : "") + '">' +
+          '<div class="head"><div class="icon">' + ICONS[p.cat] + '</div><div>' +
+          '<span class="brand-name">' + p.brand + '</span><h3>' + p.name + "</h3></div></div>" +
+          '<ul class="specs">' + specs + "</ul>" +
+          (conflicts.length ? '<div class="warn">' + conflicts[0].text + "</div>" : "") +
+          '<div class="foot"><span class="price">' + peso(p.price) + "</span>" +
+          '<button type="button" class="choose' + (chosen ? " on" : "") + '" data-part="' + p.id + '">' +
+          (chosen ? "Remove" : "Choose") + "</button></div></article>";
+      });
+      $("grid").innerHTML = html;
+    }
+
+    function renderBuild() {
+      var total = 0, count = 0, slots = "";
+      CATS.forEach(function (c) {
+        var part = build[c.id] ? byId(build[c.id]) : null;
+        if (part) { total += part.price; count++; }
+        slots += "<li><span class=\"name\"><span class=\"label\">" + c.label + "</span>" +
+          (part ? part.name : '<span class="empty">Not chosen</span>') + "</span>" +
+          '<span class="amt">' + (part ? peso(part.price) : "") + "</span></li>";
+      });
+      $("slots").innerHTML = slots;
+      $("total").textContent = peso(total);
+      $("progress").textContent = count + " of " + CATS.length + " parts chosen";
+
+      var checks = runChecks(build);
+      var html = "";
+      checks.forEach(function (c) {
+        html += '<li class="' + (c.ok ? "ok" : "bad") + '">' + (c.ok ? "\u2713 " : "\u26A0 ") + c.text + "</li>";
+      });
+      $("checks").innerHTML = html;
+    }
+
+    function renderAll() { renderTabs(); renderGrid(); renderBuild(); saveBuild(); }
+
+    function say(msg) {
+      $("status").textContent = msg;
+      setTimeout(function () { if ($("status").textContent === msg) { $("status").textContent = ""; } }, 2500);
+    }
+
+    $("tabs").addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-cat]");
+      if (!btn) { return; }
+      activeCat = btn.getAttribute("data-cat");
+      renderTabs(); renderGrid();
+    });
+
+    $("grid").addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-part]");
+      if (!btn) { return; }
+      var id = btn.getAttribute("data-part");
+      if (build[activeCat] === id) { delete build[activeCat]; } else { build[activeCat] = id; }
+      renderAll();
+    });
+
+    $("sort").addEventListener("change", renderGrid);
+
+    document.querySelectorAll("[data-preset]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        build = {};
+        var preset = PRESETS[btn.getAttribute("data-preset")];
+        Object.keys(preset).forEach(function (k) { build[k] = preset[k]; });
+        renderAll();
+      });
+    });
+
+    $("clear").addEventListener("click", function () { build = {}; renderAll(); say("Build cleared."); });
+
+    $("copy").addEventListener("click", function () {
+      var lines = ["My BuildKo build", ""], total = 0;
+      CATS.forEach(function (c) {
+        if (build[c.id]) {
+          var part = byId(build[c.id]);
+          total += part.price;
+          lines.push(c.label + ": " + part.name + " - " + peso(part.price));
+        }
+      });
+      lines.push("", "Total: " + peso(total));
+      var text = lines.join("\n");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { say("Copied to clipboard."); },
+          function () { say("Couldn't copy. Select the list and copy it manually."); });
+      } else {
+        say("Copy isn't available in this browser.");
+      }
+    });
+
+    loadBuild();
+    renderAll();
+  </script>
+</body>
+</html>
